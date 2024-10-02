@@ -1,0 +1,3 @@
+eks-echo.default:8080 
+echo-ztunnel.ecs.local:8080 
+-I httpbin.org

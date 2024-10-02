@@ -1,0 +1,6 @@
+istioctl
+# Ignore everything in the tf/ directory
+tf/*
+
+# Allow .tf files
+!tf/*.tf

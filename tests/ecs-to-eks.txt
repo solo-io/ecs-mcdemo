@@ -1,0 +1,1 @@
+eks-echo.default:8080

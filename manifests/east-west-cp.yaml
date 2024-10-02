@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  labels:
+    istio.io/expose-istiod: "15012"
+    topology.istio.io/network: eks # Must match istioctl install command
+  name: eastwest
+  namespace: istio-system
+spec:
+  gatewayClassName: istio-eastwest
+  listeners:
+  - name: cross-network
+    port: 15008
+    protocol: HBONE
+    tls:
+      mode: Passthrough
