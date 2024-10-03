@@ -81,7 +81,7 @@ data "aws_subnets" "private" {
 # Local variables for the ECS cluster and image
 locals {
   ecs_cluster_name = "ecs-${var.cluster_name}"
-  ztunnel_image    = "us-docker.pkg.dev/istio-enterprise-private/internal-istio-builds/ztunnel:1.24-alpha.fa3b8447e4d7c0d4d0167d4de9ad51991330b6f3"
+  ztunnel_image    = "mcallisterpetr/ztunnel:1.24-alpha.fa3b8447e4d7c0d4d0167d4de9ad51991330b6f3"
 }
 
 # Cloud Map (Service Discovery)
