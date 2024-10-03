@@ -5,8 +5,9 @@ This guide provides detailed instructions to deploy an **alpha prototype** of EC
 The setup has been validated for this phase, and following these steps should result in a successful integration. However, please be aware that changes may occur as we gather feedback and make improvements.
 
 In addition to this GitHub repository, there are two other locations where important artifacts can be found:
-- AWS **S3 bucket** containing `istioctl` binaries.
-- **Docker Hub** hosting the alpha images.
+
+- Contact Solo.io to obtain the istioctl binaries.
+- Docker Hub hosts the alpha images.
 
 ## Variables to Configure
 
@@ -18,7 +19,7 @@ export OWNER_NAME=$(whoami)        # The name of the cluster owner (auto-fills w
 export EKS_VERSION=1.30            # Version of EKS to be used for the cluster
 export CLUSTER_NAME=demo-ztunnel-0 # Name of the cluster
 export NUMBER_NODES=2              # The number of nodes in your EKS cluster
-export NODE_TYPE="c7i.xlarge"      # The instance type for the nodes in the EKS cluster
+export NODE_TYPE="t2.medium"      # The instance type for the nodes in the EKS cluster
 ```
 
 ## Create Cluster with `eksctl` Using Inline YAML
@@ -64,32 +65,15 @@ EOF
 Gateway API is a new set of resources to manage service traffic in a Kubernetes-native way. Here, we're installing the experimental version of the Gateway API, which will be used by Istio for ingress.
 
 ```bash
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/experimental-install.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/experimental-install.yaml
 ```
 
 For more details, refer to the official [Gateway API documentation](https://gateway-api.sigs.k8s.io/guides/) and the Istio [documentation](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/).
 
 ## Obtain the most recent binary
+To obtain the appropriate alpha version of istioctl, which includes support for ECS, please provide Solo.io with your operating system (OS) and architecture (ARCH) to receive the correct binary archive.
 
-To download the appropriate **alpha version** of `istioctl`, which includes support for ECS, set the following variables based on your system. Please note that this version is in its **alpha phase** and is intended for early feedback and testing.
-
-
-1. **OS**: Set this to your operating system, e.g., `linux`, `osx`, or `win`.
-2. **ARCH**: Set this to your architecture, e.g., `amd64`, `arm64`, or `armv7`.
-
-#### Example:
-
-For a Linux system with an `amd64` architecture:
-
-```bash
-OS=linux
-ARCH=amd64
-curl -O https://ecs-tasks-tmp.s3.us-west-1.amazonaws.com/istioctl-124-alpha/istioctl-1.24-alpha-$OS-$ARCH.tar.gz
-```
-
-Make sure to adjust $OS and $ARCH according to your system configuration.
-
-Once you've downloaded the appropriate `istioctl` archive, you'll need to extract the contents and clean up by deleting the archive file. The following commands will help you achieve that:
+Once you've received the appropriate `istioctl` archive, you'll need to extract the contents and clean up by deleting the archive file. The following commands will help you achieve that:
 
 
 ```bash
@@ -161,8 +145,6 @@ This configuration allows the Istio control plane to interact with both Kubernet
 - `profile=ambient`: Specifies that we want to install Istio in Ambient mode.
 - `meshConfig.accessLogFile`: Logs all traffic for debugging purposes.
 - `dnsCapture=true`: Ensures that DNS traffic is captured by Ambient ztunnels.
-- `autoscaleEnabled=false`: Disables autoscaling for the control plane (Pilot).
-- `pilot.image`: Uses a custom image for the Istio control plane, tailored for ECS.
 
 ## Create the ECS Task Role
 

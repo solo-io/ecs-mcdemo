@@ -226,7 +226,13 @@ resource "aws_ecs_task_definition" "shell_task" {
       "memory": 512,
       "cpu": 256,
       "command": ["sleep infinity"],
-      "entryPoint": ["sh", "-c"]
+      "entryPoint": ["sh", "-c"],
+      "environment": [
+        {
+          "name": "ALL_PROXY",
+          "value": "socks5h://127.0.0.1:15080"
+        }
+      ]
     },
     {
       "name": "ztunnel",

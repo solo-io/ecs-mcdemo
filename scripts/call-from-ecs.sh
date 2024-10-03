@@ -52,7 +52,7 @@ done < "$COMMANDS_FILE"
 # Iterate over the commands array and execute them remotely in the ECS task container
 for cmd in "${commands[@]}"; do
     # Prepend the SOCKS5 proxy to the curl command
-    final_cmd="sh -c 'ALL_PROXY=socks5h://127.0.0.1:15080 curl $cmd'"
+    final_cmd="sh -c 'curl $cmd'"
 
     # Add a separator between commands
     echo "-----"
