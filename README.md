@@ -14,10 +14,10 @@ In addition to this GitHub repository, there are two other locations where impor
 The following environment variables are needed to configure your EKS cluster. These values specify the AWS region, owner, EKS version, cluster name, number of nodes, and node types. Be sure to adjust these based on your needs.
 
 ```bash
-export AWS_REGION=us-west-2        # The AWS region where the cluster will be deployed
+export AWS_REGION=us-west-1        # The AWS region where the cluster will be deployed
 export OWNER_NAME=$(whoami)        # The name of the cluster owner (auto-fills with your username)
 export EKS_VERSION=1.30            # Version of EKS to be used for the cluster
-export CLUSTER_NAME=demo-ztunnel-0 # Name of the cluster
+export CLUSTER_NAME=demo-ztunnel-1 # Name of the cluster
 export NUMBER_NODES=2              # The number of nodes in your EKS cluster
 export NODE_TYPE="t2.medium"      # The instance type for the nodes in the EKS cluster
 ```
@@ -114,7 +114,7 @@ spec:
     accessLogFile: /dev/stdout
   values:
     global:
-      hub: mcallisterpetr
+      hub: soloio
       network: eks # Set a unique network name
     ztunnel:
        # TODO: read from global.network
