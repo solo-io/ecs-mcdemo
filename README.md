@@ -246,6 +246,8 @@ terraform -chdir=./tf init
 terraform -chdir=./tf apply --auto-approve
 ```
 
+__NOTE__ The current Terraform definition sets the environment variable `ALL_PROXY=socks5h://127.0.0.1:15080`. This configuration ensures that all traffic is routed through the local SOCKS5 proxy at port 15080. As a result, all communication from the application or service running as an ECS Task is captured by the `ztunnel`.
+
 ## Deploy Test Pods in the EKS Cluster
 To test the setup, deploy shell and echo applications in the EKS cluster to ensure everything is functioning properly:
 
