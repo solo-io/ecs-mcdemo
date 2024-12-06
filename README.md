@@ -16,8 +16,8 @@ The following environment variables are needed to configure your EKS cluster. Th
 ```bash
 export AWS_REGION=us-west-1        # The AWS region where the cluster will be deployed
 export OWNER_NAME=$(whoami)        # The name of the cluster owner (auto-fills with your username)
-export EKS_VERSION=1.30            # Version of EKS to be used for the cluster
-export CLUSTER_NAME=demo-ztunnel-1 # Name of the cluster
+export EKS_VERSION=1.31            # Version of EKS to be used for the cluster
+export CLUSTER_NAME=demo-ztunnel-0 # Name of the cluster
 export NUMBER_NODES=2              # The number of nodes in your EKS cluster
 export NODE_TYPE="t2.medium"      # The instance type for the nodes in the EKS cluster
 ```
@@ -78,7 +78,7 @@ Once you've received the appropriate `istioctl` archive, you'll need to extract 
 
 ```bash
 # Extract the contents
-tar -xzf istioctl-1.24-alpha-$OS-$ARCH.tar.gz
+tar -xzf istioctl-1.24.1-patch0-solo-$OS-$ARCH.tar.gz
 
 # Delete the archive file
 rm istioctl-1.24-alpha-$OS-$ARCH.tar.gz
@@ -101,7 +101,13 @@ client version: 1.24-alpha.fa3b8447e4d7c0d4d0167d4de9ad51991330b6f3
 
 This command installs Istio in Ambient mode with all the required settings for integrating with an ECS cluster. In addition to enabling Ambient mode, it also includes the **ECS cluster name**, which for this demo is based on the EKS cluster name defined earlier. By adding the ECS cluster information, the Istio control plane can automatically discover services running in ECS tasks, allowing for seamless service discovery across both Kubernetes and ECS.
 
-Please note that the snippet currently points to a **private image repository** for Istio components, so ensure you have access to the private repository or modify the image source as needed for your environment.
+Please note that the snippet currently points to a **private image repository** for Istio components, so ensure you have access to the private repository or modify the image source as needed for your environment By using the following command:
+
+```bash
+export HUB=<repo provided by Solo.io>
+```
+
+Now you're ready to install Istio in Ambient mode with ECS cluster integration:
 
 ```bash
 cat <<EOF | ./istioctl install -y -f -
@@ -114,8 +120,7 @@ spec:
     accessLogFile: /dev/stdout
   values:
     global:
-      hub: soloio
-      network: eks # Set a unique network name
+      hub: ${HUB}
     ztunnel:
        # TODO: read from global.network
       env:
