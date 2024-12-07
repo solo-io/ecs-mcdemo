@@ -77,11 +77,20 @@ Once you've received the appropriate `istioctl` archive, you'll need to extract 
 
 
 ```bash
+# Set the version recommended by Solo.io 
+
+export ISTIO_VERSION=<solo provided version>
+
+# Set the OS and ARCH variables based on your environment
+
+export OS=<your OS>               # Can be linux, darwin, or windows
+export ARCH=<your Architecture>   # Can be amd64, arm64, or armv7
+
 # Extract the contents
-tar -xzf istioctl-1.24.1-patch0-solo-$OS-$ARCH.tar.gz
+tar -xzf istioctl-$ISTIO_VERSION-$OS-$ARCH.tar.gz
 
 # Delete the archive file
-rm istioctl-1.24-alpha-$OS-$ARCH.tar.gz
+rm istioctl-$ISTIO_VERSION-$OS-$ARCH.tar.gz
 ```
 
 Confirm istioctl version:
@@ -94,8 +103,7 @@ the expected output:
 
 ```output
 Istio is not present in the cluster: no running Istio pods in namespace "istio-system"
-client version: 1.24-alpha.fa3b8447e4d7c0d4d0167d4de9ad51991330b6f3
-```
+client version: 1.2<version should match ISTIO_VERSION> details
 
 ### Install Istio in `Ambient` Mode with ECS Cluster Integration
 
@@ -122,9 +130,6 @@ spec:
     global:
       hub: ${HUB}
     ztunnel:
-       # TODO: read from global.network
-      env:
-        NETWORK: eks # Must match above
     cni:
       # Enable DNS proxy
       ambient:
@@ -229,6 +234,7 @@ To deploy ECS tasks using Terraform, set the following environment variables, wh
 export TF_VAR_aws_region="$AWS_REGION"
 export TF_VAR_owner_name="$OWNER_NAME"
 export TF_VAR_cluster_name="$CLUSTER_NAME"
+export TF_VAR_istio_version="$ISTIO_VERSION"
 export TF_VAR_ecs_cluster_name="ecs-$CLUSTER_NAME"
 export TF_VAR_ecs_task_role_arn="$TASK_ROLE_ARN"
 export TF_VAR_ecs_execution_role_arn="$TASK_ROLE_ARN"
