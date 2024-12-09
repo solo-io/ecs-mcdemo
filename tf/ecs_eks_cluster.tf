@@ -49,6 +49,16 @@ variable "cluster_name" {
   description = "Name of the existing EKS cluster"
 }
 
+variable "istio_version" {
+  type        = string
+  description = "version to be used for ztunnel sidecars"
+}
+
+variable "istio_repo" {
+  type        = string
+  description = "docker repo for the ztunnel image"
+}
+
 variable "vpc_id" {}
 
 
@@ -81,7 +91,7 @@ data "aws_subnets" "private" {
 # Local variables for the ECS cluster and image
 locals {
   ecs_cluster_name = "ecs-${var.cluster_name}"
-  ztunnel_image    = "soloio/ztunnel:1.24-alpha.fa3b8447e4d7c0d4d0167d4de9ad51991330b6f3"
+  ztunnel_image    = "${var.istio_repo}/ztunnel:${var.istio_version}"
 }
 
 # Cloud Map (Service Discovery)

@@ -4,3 +4,5 @@ tf/*
 
 # Allow .tf files
 !tf/*.tf
+debug.txt
+*.tar.gz

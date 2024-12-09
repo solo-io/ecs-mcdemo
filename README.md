@@ -235,6 +235,7 @@ export TF_VAR_aws_region="$AWS_REGION"
 export TF_VAR_owner_name="$OWNER_NAME"
 export TF_VAR_cluster_name="$CLUSTER_NAME"
 export TF_VAR_istio_version="$ISTIO_VERSION"
+export TF_VAR_istio_repo="$HUB"
 export TF_VAR_ecs_cluster_name="ecs-$CLUSTER_NAME"
 export TF_VAR_ecs_task_role_arn="$TASK_ROLE_ARN"
 export TF_VAR_ecs_execution_role_arn="$TASK_ROLE_ARN"
@@ -252,7 +253,6 @@ echo "VPC ID: $TF_VAR_vpc_id"
 After setting the environment variables, deploy ECS tasks (echo and shell services) using Terraform:
 
 ```bash
-terraform -chdir=./tf workspace select -or-create "$CLUSTER_NAME" || terraform -chdir=./tf workspace new "$CLUSTER_NAME"
 terraform -chdir=./tf init
 terraform -chdir=./tf apply --auto-approve
 ```
