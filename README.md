@@ -1,4 +1,4 @@
-# ECS Ambient Prototype Setup - Step-by-Step Instructions
+# ECS Ambient Integration - Demo
 
 This guide provides detailed instructions to deploy an **early access** of ECS Ambient integration. Please note that this setup is currently in **early access** and is being continuously improved based on feedback from users and the broader community. As the product evolves, it will be enhanced and refined into an even better version.
 
