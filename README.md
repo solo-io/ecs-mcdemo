@@ -1,13 +1,13 @@
 # ECS Ambient Prototype Setup - Step-by-Step Instructions
 
-This guide provides detailed instructions to deploy an **alpha prototype** of ECS Ambient integration. Please note that this setup is still in the **alpha phase**, and will evolve based on feedback from internal teams, external users, and the broader community. As the prototype progresses, it will continue to be refined and shaped into a finalized product.
+This guide provides detailed instructions to deploy an **early access** of ECS Ambient integration. Please note that this setup is currently in **early access** and is being continuously improved based on feedback from users and the broader community. As the product evolves, it will be enhanced and refined into an even better version.
 
 The setup has been validated for this phase, and following these steps should result in a successful integration. However, please be aware that changes may occur as we gather feedback and make improvements.
 
-In addition to this GitHub repository, there are two other locations where important artifacts can be found:
+In addition to this GitHub repository, important artifacts can also be found in the following locations:
 
-- Contact Solo.io to obtain the istioctl binaries.
-- Docker Hub hosts the alpha images.
+Contact Solo.io to obtain the early access istioctl binaries.
+The early access images are hosted on Docker Hub.
 
 ## Variables to Configure
 
@@ -65,13 +65,13 @@ EOF
 Gateway API is a new set of resources to manage service traffic in a Kubernetes-native way. Here, we're installing the experimental version of the Gateway API, which will be used by Istio for ingress.
 
 ```bash
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/experimental-install.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
 ```
 
 For more details, refer to the official [Gateway API documentation](https://gateway-api.sigs.k8s.io/guides/) and the Istio [documentation](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/).
 
 ## Obtain the most recent binary
-To obtain the appropriate alpha version of istioctl, which includes support for ECS, please provide Solo.io with your operating system (OS) and architecture (ARCH) to receive the correct binary archive.
+To obtain the appropriate **early access** version of istioctl, which includes support for ECS, please provide Solo.io with your operating system (OS) and architecture (ARCH) to receive the correct binary archive.
 
 Once you've received the appropriate `istioctl` archive, you'll need to extract the contents and clean up by deleting the archive file. The following commands will help you achieve that:
 
@@ -87,10 +87,10 @@ export OS=<your OS>               # Can be linux, darwin, or windows
 export ARCH=<your Architecture>   # Can be amd64, arm64, or armv7
 
 # Extract the contents
-tar -xzf istioctl-$ISTIO_VERSION-$OS-$ARCH.tar.gz
+tar -xzf istioctl-$ISTIO_VERSION-solo-$OS-$ARCH.tar.gz
 
 # Delete the archive file
-rm istioctl-$ISTIO_VERSION-$OS-$ARCH.tar.gz
+rm istioctl-$ISTIO_VERSION-solo-$OS-$ARCH.tar.gz
 ```
 
 Confirm istioctl version:
@@ -103,13 +103,14 @@ the expected output:
 
 ```output
 Istio is not present in the cluster: no running Istio pods in namespace "istio-system"
-client version: 1.2<version should match ISTIO_VERSION> details
+client version: 1.2<version should match ISTIO_VERSION>
+```
 
 ### Install Istio in `Ambient` Mode with ECS Cluster Integration
 
 This command installs Istio in Ambient mode with all the required settings for integrating with an ECS cluster. In addition to enabling Ambient mode, it also includes the **ECS cluster name**, which for this demo is based on the EKS cluster name defined earlier. By adding the ECS cluster information, the Istio control plane can automatically discover services running in ECS tasks, allowing for seamless service discovery across both Kubernetes and ECS.
 
-Please note that the snippet currently points to a **private image repository** for Istio components, so ensure you have access to the private repository or modify the image source as needed for your environment By using the following command:
+Please note that the snippet currently points to a **private image repository** for Istio components, which is provided by Solo.io as explained earlier. Ensure you have access to this private repository or modify the image source to suit your environment by using the following command:
 
 ```bash
 export HUB=<repo provided by Solo.io>
@@ -146,6 +147,32 @@ spec:
         # Required for our authentication to Istiod
         REQUIRE_3P_TOKEN: "false"
 EOF
+```
+
+Expected output:
+
+```output
+        |\          
+        | \         
+        |  \        
+        |   \       
+      /||    \      
+     / ||     \     
+    /  ||      \    
+   /   ||       \   
+  /    ||        \  
+ /     ||         \ 
+/______||__________\
+____________________
+  \__       _____/  
+     \_____/        
+
+✔ Istio core installed ⛵️                                                                                                                                                      
+✔ Istiod installed 🧠                                                             
+✔ CNI installed 🪢                                                                 
+✔ Ztunnel installed 🔒                                                            
+✔ Installation complete                                                           
+The ambient profile has been installed successfully, enjoy Istio without sidecars!
 ```
 
 This configuration allows the Istio control plane to interact with both Kubernetes and ECS services.
@@ -193,7 +220,7 @@ kubectl -n $ECS_NS annotate sa $ECS_SERVICE_ACCOUNT_NAME ecs.solo.io/role-arn=$(
 Note:
 - For the purposes of this demo, the namespace (ECS_NS) is set to ecs and the service account (ECS_SERVICE_ACCOUNT_NAME) is set to httpbin.
   You should not change these values when running the demo, as doing so will cause the demo to fail.
-- In a real customer deployment, these names can be customized to meet your specific requirements.
+- In a real-life deployment, these names can be customized to meet your specific requirements.
 
 ## Enable Istiod to Accept Calls from ECS
 
@@ -234,7 +261,7 @@ To deploy ECS tasks using Terraform, set the following environment variables, wh
 export TF_VAR_aws_region="$AWS_REGION"
 export TF_VAR_owner_name="$OWNER_NAME"
 export TF_VAR_cluster_name="$CLUSTER_NAME"
-export TF_VAR_istio_version="$ISTIO_VERSION"
+export TF_VAR_istio_version="$ISTIO_VERSION-solo"
 export TF_VAR_istio_repo="$HUB"
 export TF_VAR_ecs_cluster_name="ecs-$CLUSTER_NAME"
 export TF_VAR_ecs_task_role_arn="$TASK_ROLE_ARN"
@@ -281,14 +308,11 @@ This confirms that the setup between EKS and ECS is functioning correctly.
 
 Verify that EKS pods can communicate with ECS services:
 
+Test communication from an EKS pod to an EKS service
+
 ```bash
-# Test communication from an EKS pod to an EKS service
 kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl eks-echo:8080
-
-# Test communication from an EKS pod to an ECS service via ztunnel
-kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-ztunnel.ecs.local:8080
 ```
-
 Expected output:
 
 ```output
@@ -302,6 +326,16 @@ IP=192.168.116.225
 RequestHeader=Accept:*/*
 RequestHeader=User-Agent:curl/8.10.1
 Hostname=eks-echo-5484d5bd99-hlk6w
+```
+Test communication from an EKS pod to an ECS service via ztunnel
+
+```bash
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-ztunnel.ecs.local:8080
+```
+
+Expected output:
+
+```output
 ServiceVersion=
 ServicePort=8080
 Host=echo-ztunnel.ecs.local:8080
@@ -494,4 +528,4 @@ scripts/call-from-ecs.sh tests/ecs-to-ecs-get.txt
 kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X GET echo-ztunnel.ecs.local:8080
 ```
 
-If you encounter any issues during testing, please reach out to petr.mcallister@solo.io.
+If you encounter any issues during testing, please reach out to your Solo.io representative for assistance.
