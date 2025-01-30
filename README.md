@@ -21,40 +21,10 @@ export NODE_TYPE="t2.medium"       # The instance type for the nodes in the EKS 
 
 ## Create Cluster with `eksctl` Using Inline YAML
 
-Rather than creating a configuration file on your filesystem, you can pass the configuration directly as an inline YAML block. This approach saves time and allows you to define your cluster parameters in a single command.
+Populate the prepared temaplate with your current values and pass it to `eksctl` to create an AWS EKS cluster for Istio Ambient ECS demo.
 
 ```bash
-eksctl create cluster --config-file - << EOF
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-
-metadata:
-  name: ${CLUSTER_NAME}
-  region: ${AWS_REGION}
-  version: "${EKS_VERSION}"
-  tags:
-    owner: ${OWNER_NAME}
-
-addons:
-  - name: vpc-cni                            # Addon to enable networking for the cluster
-  - name: eks-pod-identity-agent             # Enables pod identity management for ECS workloads
-
-iam:
-  withOIDC: true                             # Required to use IAM roles for service accounts
-  podIdentityAssociations:
-    - namespace: istio-system                # Namespace for Istio control plane
-      serviceAccountName: istiod             # Istio's control plane service account
-      roleName: istiod-eks-ecs-${CLUSTER_NAME}  # Custom IAM role for Istio control plane with ECS access
-      permissionPolicyARNs: [arn:aws:iam::aws:policy/AmazonECS_FullAccess]
-
-managedNodeGroups:
-  - name: managed-nodes
-    instanceType: ${NODE_TYPE}               # Instance type defined in variables
-    desiredCapacity: ${NUMBER_NODES}         # Number of nodes to create
-    privateNetworking: true                  # Ensure nodes are launched within private subnets
-    updateConfig:
-      maxUnavailable: 2                      # Number of nodes that can be updated at the same time
-EOF
+eval "echo \"$(cat manifests/eks-cluster.yaml)\"" | eksctl create cluster --config-file -
 ```
 
 ## Deploy Kubernetes Gateway API CRDs
@@ -188,12 +158,11 @@ By now EKS Cluster with Isto in Ambient mode is installed and ready to be used.
 
 Following AWS best security practices and to avoid manual BOOTSTRAP token exchanged, an ECS Task Role will be created in AWS IAM, which `istioctl` will use. If the role already exists, the script will proceed without making changes. If the role does not exist, the script will create it.
 
-Additionally, this script ensures the ECS Task has an **execution role** allowing it to write to **CloudWatch Logs**. This role is necessary for ECS tasks to send logs to CloudWatch.
-
 The script will check if the ECS Task Role exists in your AWS account and if the Role is not present, it will:
-  - Create an IAM policy with the necessary permissions.
-  - Create an IAM role.
-  - Assign the newly created permissions to the newly created IAM role.
+
+- Create an IAM policy with the necessary permissions.
+- Create an IAM role.
+- Assign the newly created permissions to the newly created IAM role.
 
 Additionally the script will **Export the ARNs of the roles (whether created or pre-existing)** as environment variables for use in the subsequent steps.
 
@@ -210,12 +179,9 @@ Expected output:
 ```output
 $ source scripts/build/create-iam.sh
 Creating task role...
-TASK_ROLE_ARN exported: arn:aws:iam::835335437537:role/ecs/ambient/eks-ecs-task-role
+TASK_ROLE_ARN exported: arn:aws:iam::012345678912:role/ecs/ambient/eks-ecs-task-role
 Creating task policy...
-TASK_POLICY_ARN exported: arn:aws:iam::835335437537:policy/ecs/ambient/eks-ecs-task-policy
-Creating execution role...
-EXECUTION_ROLE_ARN exported: arn:aws:iam::835335437537:role/ecs/ambient/ecs-task-execution-role
-Task role and execution role are ready.
+Task role is ready.
 ```
 
 ## Create Namespace for ECS
@@ -223,13 +189,21 @@ Task role and execution role are ready.
 In this step, we create a new namespace in Kubernetes called `ecs`, which will be used to store configuration objects related to ECS workloads (such as `WorkloadEntries` and `ServiceEntries`).
 
 ```bash
-export ECS_NS=ecs  # This namespace is required for the demo to work
-export ECS_SERVICE_ACCOUNT_NAME=demo  # This service account name is required for the demo
+export ECS_NS=ecs                            # This namespace is required for the demo to work
+export ECS_SERVICE_ACCOUNT_NAME=ecs-demo-sa  # This service account name is required for the demo
 
 kubectl create ns ${ECS_NS}
 kubectl label namespace ${ECS_NS} istio.io/dataplane-mode=ambient
 kubectl create sa $ECS_SERVICE_ACCOUNT_NAME -n $ECS_NS
-kubectl -n $ECS_NS annotate sa $ECS_SERVICE_ACCOUNT_NAME ecs.solo.io/role-arn=$(echo $TASK_ROLE_ARN | sed 's/\/ecs\/ambient//') --overwrite
+kubectl -n $ECS_NS annotate sa $ECS_SERVICE_ACCOUNT_NAME ecs.solo.io/role-arn=$(echo $TASK_ROLE_ARN | sed 's/\/ecs\/ambient//')
+```
+Expected output:
+
+```output
+namespace/ecs created
+namespace/ecs labeled
+serviceaccount/ecs-demo-sa created
+serviceaccount/ecs-demo-sa annotated
 ```
 
 ## Enable Istiod to Accept Calls from ECS
@@ -269,7 +243,7 @@ ECS services script is completed.
 
 ## Add ECS Service to Istio
 
-This can be done with istioctl:
+In this step, ECS are added to the Istio service mesh. `istioctl` command bootstrap the ECS service with required secrets, configuration, and permissions to communicate with the Istio control plane.
 
 ```bash
 ./istioctl ecs add-service shell-task --cluster ecs-$CLUSTER_NAME --namespace $ECS_NS
@@ -284,22 +258,26 @@ the expected output:
 • Fetching Istiod URL...
   • Service "eastwest" provides Istiod access on port 15012
 • Fetching Istiod URL (https://ae9f1c4f873dc465a9edd7b81d09c40a-1856501301.us-west-1.elb.amazonaws.com:15012)
-• Workload is authorized to run as role "arn:aws:iam::835335437537:role/ecs/ambient/eks-ecs-task-role"
-• Created task definition arn:aws:ecs:us-west-1:835335437537:task-definition/shell-task-definition:37
-• Successfully enrolled service "shell-task" (arn:aws:ecs:us-west-1:835335437537:service/ecs-demo-ztunnel-0/shell-task) to the mesh
+• Workload is authorized to run as role "arn:aws:iam::012345678912:role/ecs/ambient/eks-ecs-task-role"
+• Created task definition arn:aws:ecs:us-west-1:012345678912:task-definition/shell-task-definition:37
+• Successfully enrolled service "shell-task" (arn:aws:ecs:us-west-1:012345678912:service/ecs-demo-ztunnel-0/shell-task) to the mesh
 • Generating a bootstrap token for ecs/default...
 • Fetched Istiod Root Cert
 • Fetching Istiod URL...
   • Service "eastwest" provides Istiod access on port 15012
 • Fetching Istiod URL (https://ae9f1c4f873dc465a9edd7b81d09c40a-1856501301.us-west-1.elb.amazonaws.com:15012)
-• Workload is authorized to run as role "arn:aws:iam::835335437537:role/ecs/ambient/eks-ecs-task-role"
-• Created task definition arn:aws:ecs:us-west-1:835335437537:task-definition/echo-service-definition:19
-• Successfully enrolled service "echo-service" (arn:aws:ecs:us-west-1:835335437537:service/ecs-demo-ztunnel-0/echo-service) to the mesh
+• Workload is authorized to run as role "arn:aws:iam::012345678912:role/ecs/ambient/eks-ecs-task-role"
+• Created task definition arn:aws:ecs:us-west-1:012345678912:task-definition/echo-service-definition:19
+• Successfully enrolled service "echo-service" (arn:aws:ecs:us-west-1:012345678912:service/ecs-demo-ztunnel-0/echo-service) to the mesh
 ```
+
+Now the demo setup looks like this. ECS Services are added to the Istio Ambient Mesh:
+
+![EKS Cluster with ECS Services added to Istio Ambient Mesh](img/state-3.png)
 
 ## Deploy Test Pods in the EKS Cluster
 
-To test the setup, deploy shell and echo applications in the EKS cluster to ensure everything is functioning properly:
+To test the setup, deploy `shell` and `echo` applications in the default namespace of the previously created EKS cluster:
 
 ```bash
 # Label the default namespace with ambient mode
@@ -310,12 +288,14 @@ kubectl apply -f manifests/eks-echo.yaml
 kubectl apply -f manifests/eks-shell.yaml
 ```
 
-These commands will deploy the test pods in your EKS cluster to verify that the integration between ECS and Istio is working correctly.
+Now the demo setup is complete and looks like this:
+
+![EKS Cluster with ECS Services and EKS Pods](img/state-4.png)
 
 ## Test EKS to ECS Communication
 
 In this step, you will verify that EKS pods can communicate with ECS services
-by making HTTP requests from an EKS pod to services running both in EKS and ECS.
+by making HTTP requests from an EKS pod to services running on EKS and ECS platform.
 This confirms that the setup between EKS and ECS is functioning correctly.
 
 Verify that EKS pods can communicate with ECS services:
@@ -362,21 +342,19 @@ RequestHeader=User-Agent:curl/8.10.1
 Hostname=ip-192-168-79-89.us-west-2.compute.internal
 ```
 
+The diagram below demonstrates the flow of communication that was tested in this step:
+
+![EKS to EKS and ECS Communication](img/test-from-eks.png)
+
 ## Test ECS to EKS Communication
-
-To test connectivity from ECS to EKS, you first need to grant access to the EKS services from ECS by modifying the security groups. Then, you can run a script to verify communication between ECS and EKS workloads.
-
-### Grant Access to EKS Services from ECS
 
 For this demo, the security group settings are opened wide to simplify testing and ensure connectivity between ECS and EKS workloads. However, in a real-world deployment, **security groups should be configured more tightly** to restrict access based on specific CIDR ranges, protocols, and ports. Limiting access helps to maintain security and prevent unwanted traffic between ECS and EKS environments.
 
 ## Run the Test Script
 
-After setting up the security groups, run the test script to demonstrate the communication between ECS and EKS workloads.
+Run the test script to demonstrate the communication between ECS and EKS workloads. The provided test script reads a list of curl commands from a file (in this case, `tests/ecs-test-commands.txt`) and executes each command on the ECS container using the `aws ecs execute-command` functionality. All traffic between ECS and EKS workloads is secured with mTLS, ensuring that it is encrypted, verified, and routed through the Istio ztunnel.
 
-The test script reads a list of curl commands from a file (in this case, tests/ecs-test-commands.txt) and executes each command on the ECS container using the AWS ecs execute-command functionality. All traffic between ECS and EKS workloads is secured with mTLS, ensuring that it is encrypted, verified, and routed through the Istio ztunnel.
-
-Run the Test Script: The script takes the file as input and executes each command sequentially on the ECS task.
+Run the Test Script: The script takes the file as input and executes each command sequentially on the ECS task, this tests ensures that calls from ECS contrainer can reach EKS, ECS and an externally hosted service.
 
 ```bash
 scripts/test/call-from-ecs.sh tests/ecs-test-commands.txt
@@ -426,9 +404,13 @@ Access-Control-Allow-Origin: *
 Access-Control-Allow-Credentials: true
 ```
 
+The diagram below demonstrates the flow of communication that was tested in this step:
+
+![ECS to ECS, EKS, and External Service Communication](img/test-from-ecs.png)
+
 ## Advanced Use-Cases
 
-For testing connectivity from ECS, we will use the `call-from-ecs.sh` script. This script finds the ECS tasks running the `shell` container in the ECS cluster created by Terraform and executes `curl` commands provided in a text file. The script automates the process of sending requests to different services in the cluster, allowing you to validate connectivity and communication based on the specified parameters.
+For testing connectivity from ECS, we will continue using the `call-from-ecs.sh` script. This script finds the ECS tasks running the `shell` container in the ECS cluster created earlier and executes `curl` commands to the targets listed in the text file. The script allows you to validate connectivity and communication.
 
 ### Layer 4 Policies for EKS Workloads
 
@@ -459,6 +441,10 @@ Finally, test if **EKS to ECS communication** still **succeeds** as no policy is
 ```bash
 kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
 ```
+
+Below is a diagram illustrating the flow of communication that was tested in this step:
+
+![Calls are denied to EKS workloads](img/test-eks-deny.png)
 
 ### Layer 4 Policies for ECS Workloads
 
@@ -491,18 +477,22 @@ Finally, test if **EKS to ECS communication** is now **blocked** by the policy f
 kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
 ```
 
+Below is a diagram illustrating the flow of communication that was tested in this step:
+
+![Calls are denied to ECS workloads](img/test-ecs-deny.png)
+
 ### Layer 7 Policies
 
 For clarity, remove the previous policy:
 
 ```bash
-kubectl delete -n ecs authorizationpolicies ecs-deny-all
+kubectl delete -n $ECS_NS authorizationpolicies ecs-deny-all
 ```
 
 Now, enable the Waypoint proxy in the ECS namespace:
 
 ```bash
-./istioctl waypoint apply -n ecs --enroll-namespace
+./istioctl waypoint apply -n $ECS_NS --enroll-namespace
 ```
 
 Apply an L7 policy to allow only **POST** operations:
@@ -526,6 +516,10 @@ kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].met
 scripts/test/call-from-ecs.sh tests/ecs-to-ecs-get.txt
 kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X GET echo-service.ecs.local:8080
 ```
+
+The diagram below illustrates L7 Policy implementation via Waypoint Proxy with applied L7 Authorization Policy:
+
+![Waypoint L7 Policy testing](img/test-l7-post-deny.png)
 
 To reset the environment, delete the L7 policy:
 

@@ -72,8 +72,8 @@ existing_sg=$(aws ec2 describe-security-groups \
   --output text)
 
 if [ "$existing_sg" != "None" ]; then
-  echo "Deleting security group 'ecs-demo-sg'..." in 20 seconds
-  wait 20
+  echo "Deleting security group 'ecs-demo-sg'..." in 60 seconds
+  sleep 60
   aws ec2 delete-security-group --group-id $existing_sg --region "$AWS_REGION" > /dev/null
 
   # Check if security group deletion was successful
@@ -100,7 +100,7 @@ else
 fi
 
 # Delete log groups
-loggroups=("/aws/ecs/containerinsights/ecs-$CLUSTER_NAME/performance" "/ecs/ecs-demo")
+loggroups=("/ecs/ecs-demo")
 for group in "${loggroups[@]}"; do
   echo "Deleting log group '$group'..."
   aws logs delete-log-group --log-group-name $group > /dev/null

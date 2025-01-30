@@ -6,8 +6,8 @@
   ],
   "cpu": "256",
   "memory": "512",
-  "taskRoleArn": "ROLE_PLACEHOLDER",
-  "executionRoleArn": "ROLE_PLACEHOLDER", 
+  "taskRoleArn": "TASK_ROLE_PLACEHOLDER",
+  "executionRoleArn": "EXEC_ROLE_PLACEHOLDER", 
   "containerDefinitions": [
     {
       "name": "shell-task",
