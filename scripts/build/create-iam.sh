@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Variables for the execution role and task role policies
-EXECUTION_ROLE_NAME=ecs-task-execution-role
-EXECUTION_POLICY_ARN=arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+# Variables for the task role policies
+
 ROLE_PREFIX='/ecs/ambient/'
 TASK_ROLE_NAME=eks-ecs-task-role
 TASK_POLICY_NAME=eks-ecs-task-policy
@@ -58,39 +57,4 @@ aws iam attach-role-policy \
     --role-name $TASK_ROLE_NAME \
     --policy-arn $TASK_POLICY_ARN
 
-# Export the TASK_POLICY_ARN
-export TASK_POLICY_ARN
-echo "TASK_POLICY_ARN exported: $TASK_POLICY_ARN"
-
-# Check if the execution role exists using get-role
-if aws iam get-role --role-name $EXECUTION_ROLE_NAME > /dev/null 2>&1; 
-then
-    echo "$EXECUTION_ROLE_NAME already exists."
-    # Retrieve the existing execution role ARN
-    EXECUTION_ROLE_ARN=$(aws iam get-role --role-name $EXECUTION_ROLE_NAME --query 'Role.Arn' --output text)
-    echo "Existing execution role ARN: $EXECUTION_ROLE_ARN"
-else
-    echo "Creating execution role..."
-
-    # Create the execution role and store the ARN
-    EXECUTION_ROLE_ARN=$(aws iam create-role  \
-        --path "${ROLE_PREFIX}" \
-        --role-name $EXECUTION_ROLE_NAME \
-        --assume-role-policy-document file://iam/trust-policy.json \
-        --query 'Role.Arn' \
-        --output text)
-    
-    # Wait until the role exists
-    aws iam wait role-exists --role-name $EXECUTION_ROLE_NAME
-fi
-
-# Export the EXECUTION_ROLE_ARN
-export EXECUTION_ROLE_ARN
-echo "EXECUTION_ROLE_ARN exported: $EXECUTION_ROLE_ARN"
-
-# Attach the AmazonECSTaskExecutionRolePolicy to the execution role
-aws iam attach-role-policy \
-    --role-name $EXECUTION_ROLE_NAME \
-    --policy-arn $EXECUTION_POLICY_ARN
-
-echo "Task role and execution role are ready."
+echo "Task role is ready."

@@ -11,8 +11,8 @@ COMMANDS_FILE="$1"
 
 # Check if $2 (cluster name) is provided
 if [ -z "$2" ]; then
-  echo "Cluster name not provided, trying to connect to the cluster $TF_VAR_ecs_cluster_name..."
-  ECS_CLUSTER_NAME="$TF_VAR_ecs_cluster_name"
+  echo "Cluster name not provided, trying to connect to the cluster ecs-$CLUSTER_NAME"
+  ECS_CLUSTER_NAME="ecs-$CLUSTER_NAME"
 else
   ECS_CLUSTER_NAME="$2"
   echo "Connecting to the specified cluster: $ECS_CLUSTER_NAME"
@@ -62,7 +62,7 @@ for cmd in "${commands[@]}"; do
     output=$(aws ecs execute-command \
         --cluster "$ECS_CLUSTER_NAME" \
         --task "$TASK_ID" \
-        --container "shell" \
+        --container "shell-task" \
         --interactive \
         --command "$final_cmd" 2>&1 | grep -v "Starting session with" | grep -v "Exiting session with" | grep -v "The Session Manager plugin was installed successfully" | grep -v '^$')
 
