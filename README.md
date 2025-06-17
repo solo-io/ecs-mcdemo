@@ -83,6 +83,11 @@ Please note that the snippet currently points to a **private image repository** 
 export HUB=<repo provided by Solo.io>
 ```
 
+Set the Gloo Mesh license key:
+```bash
+export GLOO_MESH_LICENSE_KEY=<key provided by Solo.io>
+```
+
 Now you're ready to install Istio in Ambient mode with ECS cluster integration:
 
 ```bash
@@ -97,6 +102,8 @@ spec:
   values:
     global:
       hub: ${HUB}
+    license:
+      value: ${GLOO_MESH_LICENSE_KEY}
     ztunnel:
     cni:
       # Enable DNS proxy
