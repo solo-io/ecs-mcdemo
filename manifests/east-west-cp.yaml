@@ -14,3 +14,8 @@ spec:
     protocol: HBONE
     tls:
       mode: Passthrough
+  - name: xds-tls
+    port: 15012
+    protocol: TLS
+    tls:
+      mode: Passthrough
