@@ -1,10 +1,10 @@
 # ECS Ambient Integration - Demo
 
-This guide provides detailed instructions to deploy an **early access version** of ECS Ambient integration. Please note that this setup is being continuously improved based on feedback from users and the broader community. As the product evolves, it will be enhanced and refined into an even better version.
+This guide provides detailed instructions to deploy ECS Ambient integration. Please note that this setup is being continuously improved based on feedback from users and the broader community. As the product evolves, it will be enhanced and refined into an even better version.
 
 The setup has been validated for this phase, and following these steps should result in a successful integration. However, please be aware that changes may occur as we gather feedback and make improvements.
 
-In addition to this GitHub repository, it is important to know that you would need to **contact Solo.io** to obtain the early access `istioctl` binaries and private repository access to the container images.
+In addition to this GitHub repository, it is important to know that you would need to **contact Solo.io** to obtain Solo's distribution of `istioctl` binaries and private repository access to the container images.
 
 ## Variables to Configure
 
@@ -14,12 +14,12 @@ The following environment variables are needed to configure your EKS cluster. Th
 export AWS_REGION=us-east-1        # The AWS region where the cluster will be deployed
 export OWNER_NAME=$(whoami)        # The name of the cluster owner (auto-fills with your username)
 export EKS_VERSION=1.31            # Version of EKS to be used for the cluster
-export CLUSTER_NAME=ambient-ecs    # Name of the cluster
+export CLUSTER_NAME=ambientdemo    # Name of the EKS cluster. The ECS cluster will be ecs-$CLUSTER_NAME
 export NUMBER_NODES=2              # The number of nodes in your EKS cluster
 export NODE_TYPE="t2.medium"       # The instance type for the nodes in the EKS cluster
 ```
 
-## Create Cluster with `eksctl` Using Inline YAML
+## Create EKS Cluster with `eksctl` Using Inline YAML
 
 Populate the prepared temaplate with your current values and pass it to `eksctl` to create an AWS EKS cluster for Istio Ambient ECS demo.
 
@@ -46,17 +46,16 @@ Once you've received the appropriate `istioctl` archive, you'll need to extract 
 ```bash
 # Set the version recommended by Solo.io
 
-export ISTIO_VERSION=<solo provided version>
+export ISTIO_VERSION=1.26.3
 
 # Set the OS and ARCH variables based on your environment
 
-export OS=<your OS>               # Can be linux, darwin, or windows
-export ARCH=<your Architecture>   # Can be amd64, arm64, or armv7
+OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
+ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
 
+wget https://storage.googleapis.com/istio-binaries-d4cba2aff3ef/${ISTIO_VERSION}-solo/istioctl-${ISTIO_VERSION}-solo-$OS-$ARCH.tar.gz
 # Extract the contents
 tar -xzf istioctl-$ISTIO_VERSION-solo-$OS-$ARCH.tar.gz
-
-# Delete the archive file
 rm istioctl-$ISTIO_VERSION-solo-$OS-$ARCH.tar.gz
 ```
 
@@ -73,14 +72,14 @@ Istio is not present in the cluster: no running Istio pods in namespace "istio-s
 client version: 1.2<version should match ISTIO_VERSION>
 ```
 
-### Install Istio in `Ambient` Mode with ECS Cluster Integration
+### Install Istio on the EKS Cluster in `Ambient` Mode with ECS Cluster Integration
 
 This command installs Istio in Ambient mode with all the required settings for integrating with an ECS cluster. In addition to enabling Ambient mode, it also includes the **ECS cluster name**, which for this demo is based on the EKS cluster name defined earlier. By adding the ECS cluster information, the Istio control plane can automatically discover services running in ECS tasks, allowing for seamless service discovery across both Kubernetes and ECS.
 
 Please note that the snippet currently points to a **private image repository** for Istio components, which is provided by Solo.io as explained earlier. Ensure you have access to this private repository or modify the image source to suit your environment by using the following command:
 
 ```bash
-export HUB=<repo provided by Solo.io>
+export HUB=us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef
 ```
 
 Set the Gloo Mesh license key:
@@ -105,6 +104,7 @@ spec:
     license:
       value: ${GLOO_MESH_LICENSE_KEY}
     ztunnel:
+      name: ztunnel
     cni:
       # Enable DNS proxy
       ambient:
@@ -149,17 +149,27 @@ ____________________
 The ambient profile has been installed successfully, enjoy Istio without sidecars!
 ```
 
-This configuration allows the Istio control plane to interact with both Kubernetes and ECS services.
-
 ### Explanation of Parameters:
 
 - `profile=ambient`: Specifies that we want to install Istio in Ambient mode.
 - `meshConfig.accessLogFile`: Logs all traffic for debugging purposes.
 - `dnsCapture=true`: Ensures that DNS traffic is captured by Ambient ztunnels.
 
-By now EKS Cluster with Isto in Ambient mode is installed and ready to be used.
+
+### Label the network:
+
+```bash
+kubectl label namespace istio-system topology.istio.io/network=eks
+```
+This is used for multi-network deployments so Istio knows which network each workload belongs to and can leverage east-west gateway appropriately. 
+
+This configuration allows the Istio control plane to interact with both Kubernetes and ECS services.
+
+The EKS Cluster with Istio in Ambient mode is installed and ready to be used.
 
 ![EKS Cluster with Istio in Ambient Mode](img/state-1.png)
+
+Let's move to ECS.
 
 ## Create the ECS Task Role
 
@@ -215,7 +225,9 @@ serviceaccount/ecs-demo-sa annotated
 
 ## Enable Istiod to Accept Calls from ECS
 
-In this step, we configure `istiod` to securely accept communication from the ECS cluster. This ensures that ztunnels in ECS can bootstrap workloads with the necessary security measures in place.
+In this step, we configure `istiod` to securely accept communication from the ECS cluster by creating a Gateway. This ensures that ztunnels in ECS can bootstrap workloads with the necessary security measures in place.
+
+NOTE: If your east-west gateway uses an external Load Balancer (rather than the default Service of type LoadBalancer), you must add extra annotations to the Gateway resource to specify the external address. See the commented out annotations in east-west-cp.yaml.
 
 ```bash
 kubectl apply -f manifests/east-west-cp.yaml
@@ -225,7 +237,7 @@ kubectl apply -f manifests/east-west-cp.yaml
 
 ## Deploy ECS Task
 
-A shell script is used to deploy ECS tasks. It will create two tasks - one will be used to initiate the calls and another one to receive the calls. The script will create the ECS tasks in `ecs-demo` cluster.
+A shell script is used to deploy ECS tasks. It will create two tasks - one will be used to initiate the calls and another one to receive the calls. The script will create the ECS cluster and deploy the tasks to it.
 
 ```bash
 scripts/build/deploy-ecs-tasks.sh
@@ -253,8 +265,8 @@ ECS services script is completed.
 In this step, ECS are added to the Istio service mesh. `istioctl` command bootstrap the ECS service with required secrets, configuration, and permissions to communicate with the Istio control plane.
 
 ```bash
-./istioctl ecs add-service shell-task --cluster ecs-$CLUSTER_NAME --namespace $ECS_NS
-./istioctl ecs add-service echo-service --cluster ecs-$CLUSTER_NAME --namespace $ECS_NS
+./istioctl ecs add-service shell-task --cluster ecs-$CLUSTER_NAME --namespace $ECS_NS --external
+./istioctl ecs add-service echo-service --cluster ecs-$CLUSTER_NAME --namespace $ECS_NS --external
 ```
 
 the expected output:

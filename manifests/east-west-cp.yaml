@@ -4,6 +4,9 @@ metadata:
   labels:
     istio.io/expose-istiod: "15012"
     topology.istio.io/network: eks # Must match istioctl install command
+  # annotations:
+    # networking.istio.io/service-type: NodePort
+    # istio.io/expose-gateway-address: "rvennam-exs-lb-69407821cce3a017.elb.us-east-1.amazonaws.com"
   name: eastwest
   namespace: istio-system
 spec:
