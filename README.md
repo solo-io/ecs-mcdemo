@@ -105,6 +105,7 @@ spec:
       value: ${GLOO_MESH_LICENSE_KEY}
     ztunnel:
       name: ztunnel
+      network: eks
     cni:
       # Enable DNS proxy
       ambient:
