@@ -101,11 +101,11 @@ spec:
   values:
     global:
       hub: ${HUB}
+      network: eks
     license:
       value: ${GLOO_MESH_LICENSE_KEY}
     ztunnel:
       name: ztunnel
-      network: eks
     cni:
       # Enable DNS proxy
       ambient:
