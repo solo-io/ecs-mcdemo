@@ -200,21 +200,20 @@ Task role is ready.
 In this step, we create a new namespace in Kubernetes called `ecs`, which will be used to store configuration objects related to ECS workloads (such as `WorkloadEntries` and `ServiceEntries`).
 
 ```bash
-export ECS_NS=ecs                            # This namespace is required for the demo to work
-export ECS_SERVICE_ACCOUNT_NAME=ecs-demo-sa  # This service account name is required for the demo
+for NO in ${CLUSTER_NAME}-1 ${CLUSTER_NAME}-2; do
+  export ECS_NS=ecs-$NO                            
+  export ECS_SERVICE_ACCOUNT_NAME=ecs-demo-sa      # This service account name is required for the demo
 
-kubectl create ns ${ECS_NS}
-kubectl label namespace ${ECS_NS} istio.io/dataplane-mode=ambient
-kubectl create sa $ECS_SERVICE_ACCOUNT_NAME -n $ECS_NS
-kubectl -n $ECS_NS annotate sa $ECS_SERVICE_ACCOUNT_NAME ecs.solo.io/role-arn=$(echo $TASK_ROLE_ARN | sed 's/\/ecs\/ambient//')
+  kubectl create ns ${ECS_NS}
+  kubectl label namespace ${ECS_NS} istio.io/dataplane-mode=ambient
+  kubectl create sa $ECS_SERVICE_ACCOUNT_NAME -n $ECS_NS
+  kubectl -n ${ECS_NS} annotate sa $ECS_SERVICE_ACCOUNT_NAME ecs.solo.io/role-arn=$(echo $TASK_ROLE_ARN | sed 's/\/ecs\/ambient//')
+done
 ```
 Expected output:
 
 ```output
-namespace/ecs created
-namespace/ecs labeled
-serviceaccount/ecs-demo-sa created
-serviceaccount/ecs-demo-sa annotated
+TODO Update
 ```
 
 ## Enable Istiod to Accept Calls from ECS
@@ -234,22 +233,16 @@ kubectl apply -f manifests/east-west-cp.yaml
 A shell script is used to deploy ECS tasks. It will create two tasks - one will be used to initiate the calls and another one to receive the calls. The script will create the ECS cluster and deploy the tasks to it.
 
 ```bash
-scripts/build/deploy-ecs-tasks.sh
+scripts/build/deploy-ecs-tasks-2-clusters.sh
 ```
 
 Expected output:
 
 ```output
-$ scripts/build/deploy-ecs-tasks.sh
-Registering task definition for shell-task-definition.json...
-Task definition shell-task-definition.json registered successfully.
-Registering task definition for echo-task-definition.json...
-Task definition echo-task-definition.json registered successfully.
-All task definitions registered successfully.
-ecs_vpc_id: vpc-048ea4882f423f0c1
-Private Subnet IDs: subnet-00989435327e326a9,subnet-0952e8295616c404c,subnet-00a002d0f2f2f9a70
-Security Group IDs: sg-06c232b01eb75663d
-ECS services script is completed.
+$ scripts/build/deploy-ecs-tasks-2-clusters.sh
+
+TODO Update
+
 ```
 
 **NOTE** The current ECS task definition for `shell` task sets the environment variable `ALL_PROXY=socks5h://127.0.0.1:15080`. This configuration ensures that all traffic is routed through the local SOCKS5 proxy at port 15080. As a result, all communication from the application or service running as an ECS Task is captured by the Istio Ambient (`ztunnel` component).
@@ -259,29 +252,18 @@ ECS services script is completed.
 In this step, ECS are added to the Istio service mesh. `istioctl` command bootstrap the ECS service with required secrets, configuration, and permissions to communicate with the Istio control plane.
 
 ```bash
-./istioctl ecs add-service shell-task --cluster ecs-$CLUSTER_NAME --namespace $ECS_NS --external
-./istioctl ecs add-service echo-service --cluster ecs-$CLUSTER_NAME --namespace $ECS_NS --external
+./istioctl ecs add-service shell-task --cluster ecs-$CLUSTER_NAME-1 --namespace ecs-${CLUSTER_NAME}-1 --external
+./istioctl ecs add-service echo-service --cluster ecs-$CLUSTER_NAME-1 --namespace ecs-${CLUSTER_NAME}-1 --external
+./istioctl ecs add-service shell-task --cluster ecs-$CLUSTER_NAME-2 --namespace ecs-${CLUSTER_NAME}-2 --external
+./istioctl ecs add-service echo-service --cluster ecs-$CLUSTER_NAME-2 --namespace ecs-${CLUSTER_NAME}-2 --external
 ```
 
 the expected output:
 
 ```output
- Generating a bootstrap token for ecs/default...
-• Fetched Istiod Root Cert
-• Fetching Istiod URL...
-  • Service "eastwest" provides Istiod access on port 15012
-• Fetching Istiod URL (https://ae9f1c4f873dc465a9edd7b81d09c40a-1856501301.us-west-1.elb.amazonaws.com:15012)
-• Workload is authorized to run as role "arn:aws:iam::012345678912:role/ecs/ambient/eks-ecs-task-role"
-• Created task definition arn:aws:ecs:us-west-1:012345678912:task-definition/shell-task-definition:37
-• Successfully enrolled service "shell-task" (arn:aws:ecs:us-west-1:012345678912:service/ecs-demo-ztunnel-0/shell-task) to the mesh
-• Generating a bootstrap token for ecs/default...
-• Fetched Istiod Root Cert
-• Fetching Istiod URL...
-  • Service "eastwest" provides Istiod access on port 15012
-• Fetching Istiod URL (https://ae9f1c4f873dc465a9edd7b81d09c40a-1856501301.us-west-1.elb.amazonaws.com:15012)
-• Workload is authorized to run as role "arn:aws:iam::012345678912:role/ecs/ambient/eks-ecs-task-role"
-• Created task definition arn:aws:ecs:us-west-1:012345678912:task-definition/echo-service-definition:19
-• Successfully enrolled service "echo-service" (arn:aws:ecs:us-west-1:012345678912:service/ecs-demo-ztunnel-0/echo-service) to the mesh
+
+TODO Update
+
 ```
 
 Now the demo setup looks like this. ECS Services are added to the Istio Ambient Mesh:
