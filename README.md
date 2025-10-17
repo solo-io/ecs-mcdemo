@@ -47,7 +47,7 @@ Once you've received the appropriate `istioctl` archive, you'll need to extract 
 ```bash
 wget https://storage.googleapis.com/gme-istio-testing-binaries/dev/1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95/istio-1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95-linux-amd64.tar.gz
 tar xvzf istio-1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95-linux-amd64.tar.gz --strip-components=2 istio-1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95/bin/istioctl
-rm istioctl*tar.gz
+rm istio*tar.gz
 ```
 
 Confirm istioctl version:
