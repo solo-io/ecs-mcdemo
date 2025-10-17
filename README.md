@@ -410,9 +410,6 @@ RequestHeader=User-Agent:curl/8.10.1
 Hostname=ip-192-168-79-89.us-west-2.compute.internal
 ```
 
-## TODO check things below this point - update diagrams
-
-
 The diagram below demonstrates the flow of communication that was tested in this step:
 
 ![EKS to EKS and ECS Communication](img/test-from-eks.png)
@@ -476,6 +473,8 @@ Access-Control-Allow-Credentials: true
 The diagram below demonstrates the flow of communication that was tested in this step:
 
 ![ECS to ECS, EKS, and External Service Communication](img/test-from-ecs.png)
+
+## TODO check things below this point - update diagrams
 
 ## Advanced Use-Cases
 
