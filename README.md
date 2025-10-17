@@ -312,7 +312,8 @@ the expected output:
 • Fetching Istiod URL...
   • Service "eastwest" provides Istiod access on port 15012
 • Fetching Istiod URL (https://a59056c8f8825410abda45ba9ca16ccb-524419650.us-east-1.elb.amazonaws.com:15012)
-• Workload is authorized to run as role "arn:aws:iam::253915036081:role/ecs/ambient/eks-ecs-task-role"
+• Workload is authorized to run as role "arn:aws:iam::253915036081:rol$ kubectl apply -n ecs-${CLUSTER_NAME}-1 -f manifests/ecs-deny.yaml
+error: the namespace from the provided object "ecs" does not match the namespace "ecs-mcdemo-1". You must pass '--namespace=ecs' to perform this operation.e/ecs/ambient/eks-ecs-task-role"
 • Marking this workload as external to the network (pass --internal to override)
 • Created task definition arn:aws:ecs:us-east-1:253915036081:task-definition/echo-service-definition:3
 • Successfully enrolled service "echo-service" (arn:aws:ecs:us-east-1:253915036081:service/ecs-mcdemo-2/echo-service) to the mesh
@@ -512,7 +513,6 @@ Below is a diagram illustrating the flow of communication that was tested in thi
 
 ![Calls are denied to EKS workloads](img/test-eks-deny.png)
 
-## TODO check things below this point - update diagrams
 
 ### Layer 4 Policies for ECS Workloads
 
@@ -536,18 +536,26 @@ scripts/test/call-from-ecs.sh tests/ecs-to-ecs.txt ecs-${CLUSTER_NAME}-1
 - **ECS to EKS communication**: This should now be **allowed** since no L4 policy is applied to EKS workloads.
 
 ```bash
-scripts/test/call-from-ecs.sh tests/ecs-to-eks.txt
+scripts/test/call-from-ecs.sh tests/ecs-to-eks.txt ecs-${CLUSTER_NAME}-1
 ```
 
 Finally, test if **EKS to ECS communication** is now **blocked** by the policy for ECS workloads:
 
 ```bash
-kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs-${CLUSTER_NAME}-1.local:8080
+```
+
+We applied the ecs deny policy to the kubernetes namespace for the 1st ecs cluster only. Check that communication from the 2nd ECS cluster to EKS still works:
+
+```
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs-${CLUSTER_NAME}-2.local:8080
 ```
 
 Below is a diagram illustrating the flow of communication that was tested in this step:
 
 ![Calls are denied to ECS workloads](img/test-ecs-deny.png)
+
+## TODO check things below this point - update diagrams
 
 ### Layer 7 Policies
 
