@@ -1,3 +1,5 @@
+## TODO Update diagrams
+
 # ECS Ambient Integration - Demo
 
 This guide provides detailed instructions to deploy ECS Ambient integration. Please note that this setup is being continuously improved based on feedback from users and the broader community. As the product evolves, it will be enhanced and refined into an even better version.
@@ -215,6 +217,7 @@ Expected output:
 
 ```output
 namespace/ecs-mcdemo-1 created
+
 namespace/ecs-mcdemo-1 labeled
 serviceaccount/ecs-demo-sa created
 serviceaccount/ecs-demo-sa annotated
@@ -348,6 +351,7 @@ This confirms that the setup between EKS and ECS is functioning correctly.
 
 Verify that EKS pods can communicate with ECS services:
 
+
 Confirm communication between an EKS pod and an EKS service:
 
 ```bash
@@ -439,6 +443,7 @@ Using Task ID: 17c1dd4352094ef3b2eba33751af7e45
 Running command: curl eks-echo.default:8080
 ServiceVersion=
 ServicePort=8080
+
 Host=eks-echo.default:8080
 URL=/
 Method=GET
@@ -483,7 +488,8 @@ For testing connectivity from ECS, we will continue using the `call-from-ecs.sh`
 
 In this section, you'll apply a **Deny All** L4 policy to EKS workloads and test various communications between ECS and EKS tasks.
 
-First, apply the Deny All policy to block all traffic to EKS workloads:
+First, apply the Deny All policy to block all traffic
+ to EKS workloads:
 
 ```bash
 kubectl apply -f manifests/eks-deny.yaml
@@ -555,26 +561,26 @@ Below is a diagram illustrating the flow of communication that was tested in thi
 
 ![Calls are denied to ECS workloads](img/test-ecs-deny.png)
 
-## TODO check things below this point - update diagrams
 
 ### Layer 7 Policies
 
 For clarity, remove the previous policy:
 
 ```bash
-kubectl delete -n $ECS_NS authorizationpolicies ecs-deny-all
+kubectl delete -n ecs-${CLUSTER_NAME}-1 authorizationpolicies ecs-deny
 ```
 
-Now, enable the Waypoint proxy in the ECS namespace:
+Now, enable the Waypoint proxy in the ECS namespace for cluster 1:
 
 ```bash
-./istioctl waypoint apply -n $ECS_NS --enroll-namespace
+./istioctl waypoint apply -n ecs-${CLUSTER_NAME}-1 --enroll-namespace
 ```
 
-Apply an L7 policy to allow only **POST** operations:
+Apply an L7 policy to allow only **POST** operations from ecs-${CLUSTER_NAME}-2:
 
 ```bash
-kubectl apply -f manifests/post-only-allow.yaml
+export ECS_CLUSTER_NS=ecs-${CLUSTER_NAME}-2
+envsubst < manifests/post-only-allow.yaml | kubectl apply -f -
 ```
 
 Test the following scenarios:
@@ -582,15 +588,15 @@ Test the following scenarios:
 - **POST requests**: These should be **allowed**.
 
 ```bash
-scripts/test/call-from-ecs.sh tests/ecs-to-ecs-post.txt
-kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X POST echo-service.ecs.local:8080
+scripts/test/call-from-ecs.sh tests/ecs-to-ecs-post.txt ecs-${CLUSTER_NAME}-2
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X POST echo-service.ecs-${CLUSTER_NAME}-2.local:8080
 ```
 
 - **GET requests**: These will be **denied** with `RBAC: access denied`.
 
 ```bash
-scripts/test/call-from-ecs.sh tests/ecs-to-ecs-get.txt
-kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X GET echo-service.ecs.local:8080
+scripts/test/call-from-ecs.sh tests/ecs-to-ecs-get.txt ecs-${CLUSTER_NAME}-2
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X GET echo-service.ecs-${CLUSTER_NAME}-2.local:8080
 ```
 
 The diagram below illustrates L7 Policy implementation via Waypoint Proxy with applied L7 Authorization Policy:
@@ -600,7 +606,7 @@ The diagram below illustrates L7 Policy implementation via Waypoint Proxy with a
 To reset the environment, delete the L7 policy:
 
 ```bash
-kubectl delete -f manifests/post-only-allow.yaml
+kubectl delete AuthorizationPolicy post-only -n ecs-${CLUSTER_NAME}-2
 ```
 
 # Cleanup
