@@ -319,7 +319,7 @@ the expected output:
 ```
 
 Now the demo setup looks like this. ECS Services are added to the Istio Ambient Mesh:
-kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
+
 ![EKS Cluster with ECS Services added to Istio Ambient Mesh](img/state-3.png)
 
 ## Deploy Test Pods in the EKS Cluster
