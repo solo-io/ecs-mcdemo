@@ -2,7 +2,6 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: post-only
-  namespace: ecs
 spec:
   targetRefs:
   - kind: Gateway
