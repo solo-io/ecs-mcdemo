@@ -605,7 +605,7 @@ To clean up the resources created during this demo, you can use the following co
 First run the cleanup script for the ECS artifacts:
 
 ```bash
-scripts/cleanup/ecs-cleanup.sh
+scripts/cleanup/ecs-2cluster-cleanup.sh
 ```
 
 use separate script to delete IAM roles and policies:
@@ -621,7 +621,3 @@ eksctl delete cluster --name ${CLUSTER_NAME} --region ${AWS_REGION}
 ```
 
 If you encounter any issues during testing, please reach out to your Solo.io representative for assistance.
-
-Open issues:
-- cleanup gets stuck on deleting ecs clusters, needing manual deletion.
-- Security group 'ecs-demo-sg' does not get deleted. It can only be deleted after the EKS cluster is gone. 
