@@ -40,7 +40,7 @@ For more details, refer to the official [Gateway API documentation](https://gate
 
 ## Obtain the most recent binary
 
-To obtain the appropriate **alpha version** of istioctl, which includes support for the ECS Multi cluster feature, please provide Solo.io with your operating system (OS) and architecture (ARCH) to receive the correct binary archive.
+To obtain the appropriate **alpha version** of istioctl, which includes support for the ECS Multi cluster feature, please provide Solo.io with your operating system (OS) and architecture (ARCH) to receive the correct link to the archive.
 
 Once you've received the appropriate `istioctl` archive, you'll need to extract the contents and clean up by deleting the archive file. The following example commands guide you:
 
