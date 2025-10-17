@@ -1,3 +1,3 @@
 eks-echo.default:8080 
-echo-service.ecs.local:8080 
+echo-service.$ECS_CLUSTER_NAME.local:8080 
 -I httpbin.org

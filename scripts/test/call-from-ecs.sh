@@ -44,9 +44,13 @@ commands=()
 while IFS= read -r line || [ -n "$line" ]; do
     # Clean up any trailing carriage returns (e.g., from Windows-style newlines)
     line=$(echo "$line" | tr -d '\r' | xargs)
-    if [[ -n "$line" ]]; then
-        commands+=("$line")
-    fi
+	
+	# expand environment variables found in the line (e.g., $ECS_CLUSTER_NAME)
+    expanded=$(ECS_CLUSTER_NAME="$ECS_CLUSTER_NAME" envsubst <<<"$line")
+
+    # skip empty after expansion
+    [ -n "$expanded" ] && commands+=("$expanded")
+	
 done < "$COMMANDS_FILE"
 
 # Iterate over the commands array and execute them remotely in the ECS task container
