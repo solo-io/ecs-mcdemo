@@ -15,7 +15,7 @@ The following environment variables are needed to configure your EKS cluster. Th
 export AWS_REGION=us-east-1        # The AWS region where the cluster will be deployed
 export OWNER_NAME=$(whoami)        # The name of the cluster owner (auto-fills with your username)
 export EKS_VERSION=1.33            # Version of EKS to be used for the cluster
-export CLUSTER_NAME=ecsmcdemo      # Name of the EKS cluster. The ECS cluster names will be ecs-$CLUSTER_NAME-1 and ecs-$CLUSTER_NAME-2
+export CLUSTER_NAME=mcdemo      # Name of the EKS cluster. The ECS cluster names will be ecs-$CLUSTER_NAME-1 and ecs-$CLUSTER_NAME-2
 export NUMBER_NODES=2              # The number of nodes in your EKS cluster
 export NODE_TYPE="t2.medium"       # The instance type for the nodes in the EKS cluster
 ```
@@ -82,7 +82,7 @@ export GLOO_MESH_LICENSE_KEY=<key provided by Solo.io>
 Now you're ready to install Istio in Ambient mode with ECS cluster integration:
 
 ```bash
-cat <<EOF | ./istioctl install -y -f -
+cat <<EOF | ./istioctl install -y -f -kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
@@ -119,7 +119,7 @@ EOF
 
 Expected output:
 
-```output
+```outputkubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
         |\
         | \
         |  \
@@ -191,7 +191,7 @@ Expected output:
 $ source scripts/build/create-iam.sh
 Creating task role...
 TASK_ROLE_ARN exported: arn:aws:iam::012345678912:role/ecs/ambient/eks-ecs-task-role
-Creating task policy...
+Creating task policy...kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
 Task role is ready.
 ```
 
@@ -228,7 +228,7 @@ kubectl apply -f manifests/east-west-cp.yaml
 
 ![EKS Cluster with Istio CP exposed and ECS Namespace](img/state-2.png)
 
-## Deploy ECS Task
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080## Deploy ECS Task
 
 A shell script is used to deploy ECS tasks. It will create two tasks - one will be used to initiate the calls and another one to receive the calls. The script will create the ECS cluster and deploy the tasks to it.
 
@@ -267,7 +267,7 @@ TODO Update
 ```
 
 Now the demo setup looks like this. ECS Services are added to the Istio Ambient Mesh:
-
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
 ![EKS Cluster with ECS Services added to Istio Ambient Mesh](img/state-3.png)
 
 ## Deploy Test Pods in the EKS Cluster
@@ -303,7 +303,7 @@ kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].met
 
 Expected output:
 
-```output
+```outputkubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
 ServiceVersion=
 ServicePort=8080
 Host=eks-echo:8080
@@ -316,10 +316,10 @@ RequestHeader=User-Agent:curl/8.10.1
 Hostname=eks-echo-5484d5bd99-hlk6w
 ```
 
-Test communication from an EKS pod to an ECS service via ztunnel
+Test communication from an EKS pod to an ECS service via ztunnel on the 1st ECS cluster
 
 ```bash
-kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs-${CLUSTER_NAME}-1.local:8080
 ```
 
 Expected output:
@@ -327,7 +327,7 @@ Expected output:
 ```output
 ServiceVersion=
 ServicePort=8080
-Host=echo-service.ecs.local:8080
+Host=echo-service.ecs-mcdemo-1.local:8080
 URL=/
 Method=GET
 Proto=HTTP/1.1
@@ -336,6 +336,30 @@ RequestHeader=Accept:*/*
 RequestHeader=User-Agent:curl/8.10.1
 Hostname=ip-192-168-79-89.us-west-2.compute.internal
 ```
+
+Test communication from an EKS pod to an ECS service via ztunnel on the 2nd ECS cluster
+
+```bash
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs-${CLUSTER_NAME}-2.local:8080
+```
+
+Expected output:
+
+```output
+ServiceVersion=
+ServicePort=8080
+Host=echo-service.ecs-mcdemo-2.local:8080
+URL=/
+Method=GET
+Proto=HTTP/1.1
+IP=192.168.79.89
+RequestHeader=Accept:*/*
+RequestHeader=User-Agent:curl/8.10.1
+Hostname=ip-192-168-79-89.us-west-2.compute.internal
+```
+
+## TODO check things below this point - update diagrams
+
 
 The diagram below demonstrates the flow of communication that was tested in this step:
 
@@ -545,3 +569,7 @@ eksctl delete cluster --name ${CLUSTER_NAME} --region ${AWS_REGION}
 ```
 
 If you encounter any issues during testing, please reach out to your Solo.io representative for assistance.
+
+Open issues:
+- cleanup gets stuck on deleting ecs clusters, needing manual deletion.
+- Security group 'ecs-demo-sg' does not get deleted. It can only be deleted after the EKS cluster is gone. 
