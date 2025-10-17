@@ -428,15 +428,15 @@ Run the test script to demonstrate the communication between ECS and EKS workloa
 Run the Test Script: The script takes the file as input and executes each command sequentially on the ECS task, this tests ensures that calls from ECS contrainer can reach EKS, ECS and an externally hosted service.
 
 ```bash
-scripts/test/call-from-ecs.sh tests/ecs-test-commands.txt
+scripts/test/call-from-ecs.sh tests/ecs-test-commands.txt ecs-${CLUSTER_NAME}-1
 ```
 
 Expected output:
 
 ```output
-$ scripts/test/call-from-ecs.sh tests/ecs-test-commands.txt
-Cluster name not provided, trying to connect to the cluster ecs-demo-ztunnel-0
-Using Task ID: 7121f914d8864596b14622ae1be8da61
+$ scripts/test/call-from-ecs.sh tests/ecs-test-commands.txt ecs-mcdemo-1
+Connecting to the specified cluster: ecs-mcdemo-1
+Using Task ID: 17c1dd4352094ef3b2eba33751af7e45
 -----
 Running command: curl eks-echo.default:8080
 ServiceVersion=
@@ -445,28 +445,26 @@ Host=eks-echo.default:8080
 URL=/
 Method=GET
 Proto=HTTP/1.1
-IP=192.168.123.30
+IP=192.168.111.137
 RequestHeader=Accept:*/*
-RequestHeader=User-Agent:curl/8.11.1
-Hostname=eks-echo-6c84bd6f6-97pls
+RequestHeader=User-Agent:curl/8.16.0
+Hostname=eks-echo-b4c9c6bd-c9lrj
 -----
-Running command: curl echo-service.ecs.local:8080
+Running command: curl echo-service.ecs-mcdemo-1.local:8080
 ServiceVersion=
 ServicePort=8080
-Host=echo-service.ecs.local:8080
+Host=echo-service.ecs-mcdemo-1.local:8080
 URL=/
 Method=GET
 Proto=HTTP/1.1
-IP=192.168.121.25
+IP=192.168.123.16
 RequestHeader=Accept:*/*
-RequestHeader=User-Agent:curl/8.11.1
-RequestHeader=X-Forwarded-Proto:http
-RequestHeader=X-Request-Id:995cb7ef-598b-4866-8ac1-fe844a22d1e1
-Hostname=ip-192-168-121-25.us-west-1.compute.internal
+RequestHeader=User-Agent:curl/8.16.0
+Hostname=ip-192-168-123-16.ec2.internal
 -----
 Running command: curl -I httpbin.org
 HTTP/1.1 200 OK
-Date: Wed, 29 Jan 2025 22:16:50 GMT
+Date: Fri, 17 Oct 2025 10:13:10 GMT
 Content-Type: text/html; charset=utf-8
 Content-Length: 9593
 Connection: keep-alive
