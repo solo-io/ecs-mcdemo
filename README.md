@@ -522,7 +522,7 @@ First, remove the previous policy to ensure cleaner testing and apply a similar 
 
 ```bash
 kubectl delete -n default authorizationpolicies eks-echo-deny
-kubectl apply -f manifests/ecs-deny.yaml
+kubectl apply -n ecs-${CLUSTER_NAME}-1 -f manifests/ecs-deny.yaml
 ```
 
 Test the following scenarios:
@@ -530,7 +530,7 @@ Test the following scenarios:
 - **ECS to ECS communication**: This should be **denied** by the freshly applied policy.
 
 ```bash
-scripts/test/call-from-ecs.sh tests/ecs-to-ecs.txt
+scripts/test/call-from-ecs.sh tests/ecs-to-ecs.txt ecs-${CLUSTER_NAME}-1
 ```
 
 - **ECS to EKS communication**: This should now be **allowed** since no L4 policy is applied to EKS workloads.
