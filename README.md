@@ -15,7 +15,7 @@ The following environment variables are needed to configure your EKS cluster. Th
 export AWS_REGION=us-east-1        # The AWS region where the cluster will be deployed
 export OWNER_NAME=$(whoami)        # The name of the cluster owner (auto-fills with your username)
 export EKS_VERSION=1.33            # Version of EKS to be used for the cluster
-export CLUSTER_NAME=ecsmcdemo    # Name of the EKS cluster. The ECS cluster will be ecs-$CLUSTER_NAME
+export CLUSTER_NAME=ecsmcdemo      # Name of the EKS cluster. The ECS cluster names will be ecs-$CLUSTER_NAME-1 and ecs-$CLUSTER_NAME-2
 export NUMBER_NODES=2              # The number of nodes in your EKS cluster
 export NODE_TYPE="t2.medium"       # The instance type for the nodes in the EKS cluster
 ```
