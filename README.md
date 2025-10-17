@@ -4,17 +4,18 @@ This guide provides detailed instructions to deploy ECS Ambient integration. Ple
 
 The setup has been validated for this phase, and following these steps should result in a successful integration. However, please be aware that changes may occur as we gather feedback and make improvements.
 
-In addition to this GitHub repository, it is important to know that you would need to **contact Solo.io** to obtain Solo's distribution of `istioctl` binaries and private repository access to the container images.
+This guide work with a very specific alpha version of istio and istioctl to demo the EKS -> ECS multi cluster feature. With this feature you can integrate multiple ECS clusters and the task running in them with just one istio control plane in a single EKS cluster. This guide was testetd with 
+version 1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95 .
 
 ## Variables to Configure
 
-The following environment variables are needed to configure your EKS cluster. These values specify the AWS region, cluster owner, EKS version, cluster name, number of nodes, and node types. Be sure to adjust these based on your needs.
+The following environment variables are needed to configure your EKS cluster. These values specify the AWS region, cluster owner, EKS version, cluster name, number of nodes, and node types. Be sure to adjust these based on your needs. 
 
 ```bash
 export AWS_REGION=us-east-1        # The AWS region where the cluster will be deployed
 export OWNER_NAME=$(whoami)        # The name of the cluster owner (auto-fills with your username)
-export EKS_VERSION=1.31            # Version of EKS to be used for the cluster
-export CLUSTER_NAME=ambientdemo    # Name of the EKS cluster. The ECS cluster will be ecs-$CLUSTER_NAME
+export EKS_VERSION=1.33            # Version of EKS to be used for the cluster
+export CLUSTER_NAME=ecsmcdemo    # Name of the EKS cluster. The ECS cluster will be ecs-$CLUSTER_NAME
 export NUMBER_NODES=2              # The number of nodes in your EKS cluster
 export NODE_TYPE="t2.medium"       # The instance type for the nodes in the EKS cluster
 ```
@@ -32,31 +33,21 @@ eval "echo \"$(cat manifests/eks-cluster.yaml)\"" | eksctl create cluster --conf
 Gateway API is a new set of resources to manage service traffic in a Kubernetes-native way. Here, we're installing the most recent (as of January 2025) version of the Kubernetes Gateway API CRDs, which will be used by Istio for ingress.
 
 ```bash
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
 ```
 
 For more details, refer to the official [Gateway API documentation](https://gateway-api.sigs.k8s.io/guides/) and the Istio [documentation](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/).
 
 ## Obtain the most recent binary
 
-To obtain the appropriate **early access** version of istioctl, which includes support for ECS, please provide Solo.io with your operating system (OS) and architecture (ARCH) to receive the correct binary archive.
+To obtain the appropriate **alpha version** of istioctl, which includes support for the ECS Multi cluster feature, please provide Solo.io with your operating system (OS) and architecture (ARCH) to receive the correct binary archive.
 
-Once you've received the appropriate `istioctl` archive, you'll need to extract the contents and clean up by deleting the archive file. The following commands will help you achieve that:
+Once you've received the appropriate `istioctl` archive, you'll need to extract the contents and clean up by deleting the archive file. The following example commands guide you:
 
 ```bash
-# Set the version recommended by Solo.io
-
-export ISTIO_VERSION=1.26.3
-
-# Set the OS and ARCH variables based on your environment
-
-OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
-ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
-
-wget https://storage.googleapis.com/istio-binaries-d4cba2aff3ef/${ISTIO_VERSION}-solo/istioctl-${ISTIO_VERSION}-solo-$OS-$ARCH.tar.gz
-# Extract the contents
-tar -xzf istioctl-$ISTIO_VERSION-solo-$OS-$ARCH.tar.gz
-rm istioctl-$ISTIO_VERSION-solo-$OS-$ARCH.tar.gz
+wget https://storage.googleapis.com/gme-istio-testing-binaries/dev/1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95/istio-1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95-linux-amd64.tar.gz
+tar xvzf istio-1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95-linux-amd64.tar.gz --strip-components=2 istio-1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95/bin/istioctl
+rm istioctl*tar.gz
 ```
 
 Confirm istioctl version:
@@ -69,7 +60,7 @@ the expected output:
 
 ```output
 Istio is not present in the cluster: no running Istio pods in namespace "istio-system"
-client version: 1.2<version should match ISTIO_VERSION>
+client version: 1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95
 ```
 
 ### Install Istio on the EKS Cluster in `Ambient` Mode with ECS Cluster Integration
@@ -79,7 +70,8 @@ This command installs Istio in Ambient mode with all the required settings for i
 Please note that the snippet currently points to a **private image repository** for Istio components, which is provided by Solo.io as explained earlier. Ensure you have access to this private repository or modify the image source to suit your environment by using the following command:
 
 ```bash
-export HUB=us-docker.pkg.dev/gloo-mesh/istio-d4cba2aff3ef
+export HUB=us-east1-docker.pkg.dev/istio-enterprise-private/gme-istio-testing-images
+export ISTIO_TAG=1.28-alpha.c40069322c35edc88dc5d32477472e78a8d50e95
 ```
 
 Set the Gloo Mesh license key:
@@ -101,6 +93,7 @@ spec:
   values:
     global:
       hub: ${HUB}
+      tag: ${ISTIO_TAG}
       network: eks
     license:
       value: ${GLOO_MESH_LICENSE_KEY}
@@ -112,7 +105,7 @@ spec:
         dnsCapture: true
     platforms:
       ecs:
-        cluster: ecs-${CLUSTER_NAME}
+        clusters: ecs-${CLUSTER_NAME}-1,ecs-${CLUSTER_NAME}-2
     pilot:
       env:
         # Required for full DNS proxying support
