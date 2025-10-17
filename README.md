@@ -119,7 +119,7 @@ EOF
 
 Expected output:
 
-```outputkubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
+```output
         |\
         | \
         |  \
@@ -148,6 +148,7 @@ The ambient profile has been installed successfully, enjoy Istio without sidecar
 - `profile=ambient`: Specifies that we want to install Istio in Ambient mode.
 - `meshConfig.accessLogFile`: Logs all traffic for debugging purposes.
 - `dnsCapture=true`: Ensures that DNS traffic is captured by Ambient ztunnels.
+- `platforms.ecs.clusters`: Speciefies the list of ECS Clusters.
 
 
 ### Label the network:
@@ -213,7 +214,14 @@ done
 Expected output:
 
 ```output
-TODO Update
+namespace/ecs-mcdemo-1 created
+namespace/ecs-mcdemo-1 labeled
+serviceaccount/ecs-demo-sa created
+serviceaccount/ecs-demo-sa annotated
+namespace/ecs-mcdemo-2 created
+namespace/ecs-mcdemo-2 labeled
+serviceaccount/ecs-demo-sa created
+serviceaccount/ecs-demo-sa annotated
 ```
 
 ## Enable Istiod to Accept Calls from ECS
@@ -240,9 +248,16 @@ Expected output:
 
 ```output
 $ scripts/build/deploy-ecs-tasks-2-clusters.sh
-
-TODO Update
-
+Registering task definition for shell-task-definition.json...
+Task definition shell-task-definition.json registered successfully.
+Registering task definition for echo-task-definition.json...
+Task definition echo-task-definition.json registered successfully.
+All task definitions registered successfully.
+ecs_vpc_id: vpc-07116fe0105d74ae7
+Private Subnet IDs: subnet-043fee32952089cb7,subnet-0d114b43f59a03a3b
+Security Group IDs: sg-02026b180ffc4e89a
+ECS services script is completed.
+Ingress authorized for EKS security group sg-01c8f4c9d9b44d80e (for ECS demo purposes).
 ```
 
 **NOTE** The current ECS task definition for `shell` task sets the environment variable `ALL_PROXY=socks5h://127.0.0.1:15080`. This configuration ensures that all traffic is routed through the local SOCKS5 proxy at port 15080. As a result, all communication from the application or service running as an ECS Task is captured by the Istio Ambient (`ztunnel` component).
@@ -261,9 +276,46 @@ In this step, ECS are added to the Istio service mesh. `istioctl` command bootst
 the expected output:
 
 ```output
-
-TODO Update
-
+• Generating a bootstrap token for ecs-mcdemo-1/default...
+• Fetched Istiod Root Cert
+• Fetched Istio network (eks)
+• Fetching Istiod URL...
+  • Service "eastwest" provides Istiod access on port 15012
+• Fetching Istiod URL (https://a59056c8f8825410abda45ba9ca16ccb-524419650.us-east-1.elb.amazonaws.com:15012)
+• Workload is authorized to run as role "arn:aws:iam::253915036081:role/ecs/ambient/eks-ecs-task-role"
+• Marking this workload as external to the network (pass --internal to override)
+• Created task definition arn:aws:ecs:us-east-1:253915036081:task-definition/shell-task-definition:2
+• Successfully enrolled service "shell-task" (arn:aws:ecs:us-east-1:253915036081:service/ecs-mcdemo-1/shell-task) to the mesh
+• Generating a bootstrap token for ecs-mcdemo-1/default...
+• Fetched Istiod Root Cert
+• Fetched Istio network (eks)
+• Fetching Istiod URL...
+  • Service "eastwest" provides Istiod access on port 15012
+• Fetching Istiod URL (https://a59056c8f8825410abda45ba9ca16ccb-524419650.us-east-1.elb.amazonaws.com:15012)
+• Workload is authorized to run as role "arn:aws:iam::253915036081:role/ecs/ambient/eks-ecs-task-role"
+• Marking this workload as external to the network (pass --internal to override)
+• Created task definition arn:aws:ecs:us-east-1:253915036081:task-definition/echo-service-definition:2
+• Successfully enrolled service "echo-service" (arn:aws:ecs:us-east-1:253915036081:service/ecs-mcdemo-1/echo-service) to the mesh
+• Generating a bootstrap token for ecs-mcdemo-2/default...
+• Fetched Istiod Root Cert
+• Fetched Istio network (eks)
+• Fetching Istiod URL...
+  • Service "eastwest" provides Istiod access on port 15012
+• Fetching Istiod URL (https://a59056c8f8825410abda45ba9ca16ccb-524419650.us-east-1.elb.amazonaws.com:15012)
+• Workload is authorized to run as role "arn:aws:iam::253915036081:role/ecs/ambient/eks-ecs-task-role"
+• Marking this workload as external to the network (pass --internal to override)
+• Created task definition arn:aws:ecs:us-east-1:253915036081:task-definition/shell-task-definition:3
+• Successfully enrolled service "shell-task" (arn:aws:ecs:us-east-1:253915036081:service/ecs-mcdemo-2/shell-task) to the mesh
+• Generating a bootstrap token for ecs-mcdemo-2/default...
+• Fetched Istiod Root Cert
+• Fetched Istio network (eks)
+• Fetching Istiod URL...
+  • Service "eastwest" provides Istiod access on port 15012
+• Fetching Istiod URL (https://a59056c8f8825410abda45ba9ca16ccb-524419650.us-east-1.elb.amazonaws.com:15012)
+• Workload is authorized to run as role "arn:aws:iam::253915036081:role/ecs/ambient/eks-ecs-task-role"
+• Marking this workload as external to the network (pass --internal to override)
+• Created task definition arn:aws:ecs:us-east-1:253915036081:task-definition/echo-service-definition:3
+• Successfully enrolled service "echo-service" (arn:aws:ecs:us-east-1:253915036081:service/ecs-mcdemo-2/echo-service) to the mesh
 ```
 
 Now the demo setup looks like this. ECS Services are added to the Istio Ambient Mesh:
