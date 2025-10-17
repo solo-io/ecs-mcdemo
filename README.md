@@ -616,13 +616,13 @@ To clean up the resources created during this demo, you can use the following co
 First run the cleanup script for the ECS artifacts:
 
 ```bash
-scripts/cleanup/ecs-2cluster-cleanup.sh
+./scripts/cleanup/ecs-2cluster-cleanup.sh
 ```
 
 use separate script to delete IAM roles and policies:
 
 ```bash
-scripts/cleanup/iam-cleanup.sh
+./scripts/cleanup/iam-cleanup.sh
 ```
 
 Finally, delete the EKS cluster:
