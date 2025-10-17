@@ -474,8 +474,6 @@ The diagram below demonstrates the flow of communication that was tested in this
 
 ![ECS to ECS, EKS, and External Service Communication](img/test-from-ecs.png)
 
-## TODO check things below this point - update diagrams
-
 ## Advanced Use-Cases
 
 For testing connectivity from ECS, we will continue using the `call-from-ecs.sh` script. This script finds the ECS tasks running the `shell` container in the ECS cluster created earlier and executes `curl` commands to the targets listed in the text file. The script allows you to validate connectivity and communication.
@@ -495,24 +493,26 @@ After applying the policy, test the following scenarios:
 - **ECS to ECS communication**: This should **succeed** since the policy only applies to EKS workloads.
 
 ```bash
-scripts/test/call-from-ecs.sh tests/ecs-to-ecs.txt
+scripts/test/call-from-ecs.sh tests/ecs-to-ecs.txt ecs-${CLUSTER_NAME}-2
 ```
 
 - **ECS to EKS communication**: This should be **blocked** by the L4 policy.
 
 ```bash
-scripts/test/call-from-ecs.sh tests/ecs-to-eks.txt
+scripts/test/call-from-ecs.sh tests/ecs-to-eks.txt ecs-${CLUSTER_NAME}-1
 ```
 
 Finally, test if **EKS to ECS communication** still **succeeds** as no policy is blocking it:
 
 ```bash
-kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs-${CLUSTER_NAME}-1.local:8080
 ```
 
 Below is a diagram illustrating the flow of communication that was tested in this step:
 
 ![Calls are denied to EKS workloads](img/test-eks-deny.png)
+
+## TODO check things below this point - update diagrams
 
 ### Layer 4 Policies for ECS Workloads
 
