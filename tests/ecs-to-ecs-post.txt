@@ -1,1 +1,1 @@
--X POST echo-service.ecs.local:8080
+-X POST echo-service.$ECS_CLUSTER_NAME.local:8080

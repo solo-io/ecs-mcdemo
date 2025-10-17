@@ -13,8 +13,8 @@ done
 services=("shell-task" "echo-service")
 for NU in 1 2; do
   for service in "${services[@]}"; do
-    echo "Scaling down service '$service' in cluster 'ecs-$CLUSTER_NAME-$NU' to zero..."
-    aws ecs update-service --cluster ecs-$CLUSTER_NAME --service $service --desired-count 0 > /dev/null
+    echo "Scaling down service '$service' in cluster 'ecs-${CLUSTER_NAME}-$NU' to zero..."
+    aws ecs update-service --cluster ecs-${CLUSTER_NAME}-$NU --service $service --desired-count 0 > /dev/null
   
     # Check if scaling was successful
     if [ $? -ne 0 ]; then
@@ -22,8 +22,8 @@ for NU in 1 2; do
     else
       sleep 10
   
-      echo "Deleting service '$service' in cluster 'ecs-$CLUSTER_NAME-$NU'..."
-      aws ecs delete-service --cluster ecs-$CLUSTER_NAME-$NU --service $service > /dev/null
+      echo "Deleting service '$service' in cluster 'ecs-${CLUSTER_NAME}-$NU'..."
+      aws ecs delete-service --cluster ecs-${CLUSTER_NAME}-$NU --service $service > /dev/null
   
       # Check if delete was successful
       if [ $? -ne 0 ]; then

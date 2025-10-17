@@ -1,7 +1,7 @@
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: ecs-deny-all
+  name: ecs-deny
 spec:
   action: DENY
   rules: 

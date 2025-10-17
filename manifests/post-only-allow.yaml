@@ -2,6 +2,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: post-only
+  namespace: ${ECS_CLUSTER_NS}
 spec:
   targetRefs:
   - kind: Gateway
@@ -11,7 +12,7 @@ spec:
   rules:
   - from:
     - source:
-        namespaces: ["default", "ecs"]
+        namespaces: ["default", "$ECS_CLUSTER_NS"]
     to:
     - operation:
         methods: ["POST"]

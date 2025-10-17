@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# 
+# This script will create the ECS infrastructure on AWS
+#  It will create 2 ECS clusters
 
 # Check if required environment variables are defined
 required_vars=("TASK_ROLE_ARN" "ECS_SERVICE_ACCOUNT_NAME" "AWS_REGION" "CLUSTER_NAME" "OWNER_NAME")
