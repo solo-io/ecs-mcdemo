@@ -82,7 +82,7 @@ export GLOO_MESH_LICENSE_KEY=<key provided by Solo.io>
 Now you're ready to install Istio in Ambient mode with ECS cluster integration:
 
 ```bash
-cat <<EOF | ./istioctl install -y -f -kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl echo-service.ecs.local:8080
+cat <<EOF | ./istioctl install -y -f -
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
