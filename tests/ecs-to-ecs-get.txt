@@ -1,1 +1,1 @@
--X GET echo-service.ecs.local:8080
+-X GET echo-service.${ECS_CLUSTER_NAME}.local:8080
