@@ -576,10 +576,10 @@ Now, enable the Waypoint proxy in the ECS namespace for cluster 1:
 ./istioctl waypoint apply -n ecs-${CLUSTER_NAME}-1 --enroll-namespace
 ```
 
-Apply an L7 policy to allow only **POST** operations from ecs-${CLUSTER_NAME}-2:
+Apply an L7 policy to allow only **POST** operations from ecs-${CLUSTER_NAME}-1:
 
 ```bash
-export ECS_CLUSTER_NS=ecs-${CLUSTER_NAME}-2
+export ECS_CLUSTER_NS=ecs-${CLUSTER_NAME}-1
 envsubst < manifests/post-only-allow.yaml | kubectl apply -f -
 ```
 
@@ -588,14 +588,14 @@ Test the following scenarios:
 - **POST requests**: These should be **allowed**.
 
 ```bash
-scripts/test/call-from-ecs.sh tests/ecs-to-ecs-post.txt ecs-${CLUSTER_NAME}-2
+scripts/test/call-from-ecs.sh tests/ecs-to-ecs-post.txt ecs-${CLUSTER_NAME}-1
 kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X POST echo-service.ecs-${CLUSTER_NAME}-2.local:8080
 ```
 
 - **GET requests**: These will be **denied** with `RBAC: access denied`.
 
 ```bash
-scripts/test/call-from-ecs.sh tests/ecs-to-ecs-get.txt ecs-${CLUSTER_NAME}-2
+scripts/test/call-from-ecs.sh tests/ecs-to-ecs-get.txt ecs-${CLUSTER_NAME}-1
 kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X GET echo-service.ecs-${CLUSTER_NAME}-2.local:8080
 ```
 
@@ -606,7 +606,7 @@ The diagram below illustrates L7 Policy implementation via Waypoint Proxy with a
 To reset the environment, delete the L7 policy:
 
 ```bash
-kubectl delete AuthorizationPolicy post-only -n ecs-${CLUSTER_NAME}-2
+kubectl delete AuthorizationPolicy post-only -n ecs-${CLUSTER_NAME}-1
 ```
 
 # Cleanup
