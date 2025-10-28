@@ -35,7 +35,7 @@ eval "echo \"$(cat manifests/eks-cluster.yaml)\"" | eksctl create cluster --conf
 Gateway API is a new set of resources to manage service traffic in a Kubernetes-native way. Here, we're installing the most recent (as of January 2025) version of the Kubernetes Gateway API CRDs, which will be used by Istio for ingress.
 
 ```bash
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
 ```
 
 For more details, refer to the official [Gateway API documentation](https://gateway-api.sigs.k8s.io/guides/) and the Istio [documentation](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/).
