@@ -589,14 +589,14 @@ Test the following scenarios:
 
 ```bash
 scripts/test/call-from-ecs.sh tests/ecs-to-ecs-post.txt ecs-${CLUSTER_NAME}-1
-kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X POST echo-service.ecs-${CLUSTER_NAME}-2.local:8080
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X POST echo-service.ecs-${CLUSTER_NAME}-1.local:8080
 ```
 
 - **GET requests**: These will be **denied** with `RBAC: access denied`.
 
 ```bash
 scripts/test/call-from-ecs.sh tests/ecs-to-ecs-get.txt ecs-${CLUSTER_NAME}-1
-kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X GET echo-service.ecs-${CLUSTER_NAME}-2.local:8080
+kubectl exec -it $(kubectl get pods -l app=eks-shell -o jsonpath="{.items[0].metadata.name}") -- curl -X GET echo-service.ecs-${CLUSTER_NAME}-1.local:8080
 ```
 
 The diagram below illustrates L7 Policy implementation via Waypoint Proxy with applied L7 Authorization Policy:
