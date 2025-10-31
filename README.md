@@ -206,7 +206,6 @@ In this step, we create a new namespace in Kubernetes called `ecs`, which will b
 for NO in ${CLUSTER_NAME}-1 ${CLUSTER_NAME}-2; do
   export ECS_NS=ecs-$NO                            
   export ECS_SERVICE_ACCOUNT_NAME=ecs-demo-sa      # This service account name is required for the demo
-
   kubectl create ns ${ECS_NS}
   kubectl label namespace ${ECS_NS} istio.io/dataplane-mode=ambient
   kubectl create sa $ECS_SERVICE_ACCOUNT_NAME -n $ECS_NS
@@ -217,7 +216,6 @@ Expected output:
 
 ```output
 namespace/ecs-mcdemo-1 created
-
 namespace/ecs-mcdemo-1 labeled
 serviceaccount/ecs-demo-sa created
 serviceaccount/ecs-demo-sa annotated
